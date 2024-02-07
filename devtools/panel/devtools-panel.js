@@ -155,13 +155,22 @@ async function doCompletePrompt(prompt) {
 
   console.log(`prompt: ${prompt}`);
 
+  // TODO - replace this with the actual contents of the page
+  const page_source = `
+<body>
+  <h1 id="myTitle">Hello, world!</h1>
+</body>
+`;
+  // TODO - replace this with the actual URL of the page (sans domain?)
+  const page_url = "index.html";
+
   const language = "javascript";
   const token = await getToken();
   const resp = await fetch("https://copilot-proxy.githubusercontent.com/v1/engines/copilot-codex/completions", {
     method: "POST",
     body: JSON.stringify({
-      prompt: prompt,
-      suffix: "",
+      prompt: `// Path: ${page_url}\n${page_source}\n<script>\n${prompt}`,
+      suffix: "\n</script>",
       max_tokens: 1000,
       temperature: 0,
       top_p: 1,
