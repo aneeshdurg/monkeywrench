@@ -1,41 +1,3 @@
-// /**
-// Handle errors from the injected script.
-// Errors may come from evaluating the JavaScript itself
-// or from the devtools framework.
-// See https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/devtools.inspectedWindow/eval#Return_value
-// */
-// function handleError(error) {
-//   if (error.isError) {
-//     console.log(`Devtools error: ${error.code}`);
-//   } else {
-//     console.log(`JavaScript error: ${error.value}`);
-//   }
-// }
-//
-// /**
-// Handle the result of evaluating the script.
-// If there was an error, call handleError.
-// */
-// function handleResult(result) {
-//   if (result[1]) {
-//     handleError(result[1]);
-//   }
-// }
-// /**
-// When the user clicks each of the first three buttons,
-// evaluate the corresponding script.
-// */
-// const evalString = "$0.style.backgroundColor = 'red'";
-// document.getElementById("button_background").addEventListener("click", () => {
-//   browser.devtools.inspectedWindow.eval(evalString).then(handleResult);
-// });
-//
-// const inspectString = "inspect(document.querySelector('h1'))";
-// document.getElementById("button_h1").addEventListener("click", () => {
-//   browser.devtools.inspectedWindow.eval(inspectString).then(handleResult);
-// });
-
-
 async function authenticateDevice() {
   console.log("authenticateDevice");
   const resp = await fetch("https://github.com/login/device/code", {
@@ -103,7 +65,7 @@ async function getToken() {
   return newToken.value;
 }
 
-document.getElementById("button_setup").addEventListener("click", async () => {
+async function initialSetup() {
   console.log("Initial setup");
   console.log("running...");
   const cached_token = await browser.storage.local.get({ auth_token: null });
@@ -143,24 +105,39 @@ document.getElementById("button_setup").addEventListener("click", async () => {
     const token = await getToken();
     console.log(`api_token: ${token}`);
   }
-});
+}
 
 async function doCompletePrompt(prompt) {
   const auth_token = await browser.storage.local.get({ auth_token: null });
   console.log(auth_token);
 
   if (!auth_token.auth_token) {
+    const evalString = `alert('Cannot complete prompt without authenticating. Please run the setup first.')`;
+    const res = await browser.devtools.inspectedWindow.eval(evalString);
     return;
   }
 
   console.log(`prompt: ${prompt}`);
 
+  const input_context = document.getElementById("input_context").value;
+  const query = `[...document.querySelectorAll('${input_context}')].map(x => x.outerHTML).join('\\n')`;
+
   // TODO - replace this with the actual contents of the page
-  const page_source = `
-<body>
-  <h1 id="myTitle">Hello, world!</h1>
-</body>
-`;
+  let page_source = await browser.devtools.inspectedWindow.eval(query);
+  page_source = html_beautify(page_source[0]);
+
+  let page_source_lines = page_source.split('\n');
+  const max_lines = 250;
+  if (page_source_lines.length > max_lines) {
+    console.log("Truncating page source to max_lines");
+    // This isn't a good solution. We should instead use the node count and
+    // randomly sample nodes to get a representative sample of the page.
+    page_source_lines = page_source_lines.slice(0, max_lines);
+    page_source = page_source_lines.join('\n');
+  }
+
+  console.log(page_source);
+
   // TODO - replace this with the actual URL of the page (sans domain?)
   const page_url = "index.html";
 
@@ -188,7 +165,7 @@ async function doCompletePrompt(prompt) {
   });
 
   const text = await resp.text();
-  console.log(text);
+  // console.log(text);
   const lines = text.split('\n');
   const data = lines.filter(x => x.startsWith('data: {')).map((x) => {
     try {
@@ -224,4 +201,5 @@ async function completePrompt() {
   input_el.value += result;
 }
 
+document.getElementById("button_setup").addEventListener("click", initialSetup);
 document.getElementById("button_prompt").addEventListener("click", completePrompt);
