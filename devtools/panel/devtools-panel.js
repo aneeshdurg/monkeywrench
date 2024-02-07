@@ -145,9 +145,7 @@ document.getElementById("button_setup").addEventListener("click", async () => {
   }
 });
 
-document.getElementById("button_prompt").addEventListener("click", async () => {
-  console.log("button_prompt");
-
+async function doCompletePrompt(prompt) {
   const auth_token = await browser.storage.local.get({ auth_token: null });
   console.log(auth_token);
 
@@ -155,7 +153,6 @@ document.getElementById("button_prompt").addEventListener("click", async () => {
     return;
   }
 
-  const prompt = document.getElementById("input_prompt").value + "\n";
   console.log(`prompt: ${prompt}`);
 
   const language = "javascript";
@@ -181,5 +178,41 @@ document.getElementById("button_prompt").addEventListener("click", async () => {
     }
   });
 
-  console.log(resp);
-});
+  const text = await resp.text();
+  console.log(text);
+  const lines = text.split('\n');
+  const data = lines.filter(x => x.startsWith('data: {')).map((x) => {
+    try {
+      return JSON.parse(x.slice(6));
+    } catch (e) {
+      console.log(e, x);
+      return "";
+    }
+  })
+  console.log(data)
+  let result = "";
+  for (let d of data) {
+    result += d["choices"][0]["text"];
+  }
+
+  console.log(result);
+  return result;
+}
+
+async function completePrompt() {
+  const input_el = document.getElementById("input_prompt");
+
+  let prompt = input_el.value;
+  let result = await doCompletePrompt(prompt);
+  if (result.length === 0) {
+    prompt += "\n";
+    result = await doCompletePrompt(prompt);
+    if (result.length) {
+      result = "\n" + result;
+    }
+  }
+
+  input_el.value += result;
+}
+
+document.getElementById("button_prompt").addEventListener("click", completePrompt);
