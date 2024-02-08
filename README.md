@@ -6,14 +6,25 @@ Integrate Github Copilot with Firefox devtools! Have you ever wanted to change t
 
 The demo above shows usage of `ffcopilot` to generate code to hide blog posts matching a certain string.
 
-## Usage
+## Installation
 
-Open `firefox` navigate to `about:debugging`, click on `This Firefox` and then
+This extension is still WIP so the process to install requires some manual
+steps. Open `firefox` navigate to `about:debugging`, click on `This Firefox` and then
 `Load Temporary Add-on`. Then click on `manifest.json` from your local clone of
 this repo.
 
+
+
+## Usage
+
 You will then be able to open devtools on any page (right-click > Inspect), and
 a panel labeled `CoPilot` should be visible.
+
+copilot has limits on the maximum prompt size, so you will need to tweak the
+query selector field to pick which elements are "visible" to the AI. You can
+improve the quality of the suggestions by choosing a more restrictive selector.
+While typing in the editor view, the AI will be activated whenever you stop
+typing. You can manually request completions by pressing `Ctrl + Enter`.
 
 ## Limitations
 

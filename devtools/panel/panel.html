@@ -3,16 +3,20 @@
 <html>
   <head>
     <meta charset="utf-8">
+    <script src="beautify-html.min.js"></script>
+    <script src="editor.bundle.js"></script>
+    <script src="devtools-panel.js"></script>
   </head>
   <body>
-     <button id="button_setup">Initial setup</button>
-     <button id="button_prompt">Complete prompt</button>
-     <br>
-     <input type="text" id="input_context" style="width: 90%;" value="img">
-     <br>
-     <textarea style="width: 90%;" id="input_prompt" >// get all links on the page</textarea>
-    <script src="beautify-html.min.js"></script>
-    <script src="devtools-panel.js"></script>
+    <div id="pre-setup" style="display: none;">
+      <button id="button_setup">Initial setup</button>
+    </div>
+    <div id="post-setup" style="display: none;">
+      <label for="input_context">Context selector:</label>
+      <input type="text" id="input_context" style="width: 90%;" value="img">
+      <br>
+      <div id="editor"></div>
+    </div>
     <br>
   </body>
 </html>

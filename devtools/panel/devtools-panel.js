@@ -1,3 +1,5 @@
+let promptInput = null;
+
 async function authenticateDevice() {
   console.log("authenticateDevice");
   const resp = await fetch("https://github.com/login/device/code", {
@@ -105,9 +107,12 @@ async function initialSetup() {
     const token = await getToken();
     console.log(`api_token: ${token}`);
   }
+
+  document.getElementById("pre-setup").style.display = "none";
+  document.getElementById("post-setup").style.display = "";
 }
 
-async function doCompletePrompt(prompt) {
+async function completePrompt(promptPrefix, promptSuffix) {
   const auth_token = await browser.storage.local.get({ auth_token: null });
   console.log(auth_token);
 
@@ -116,8 +121,6 @@ async function doCompletePrompt(prompt) {
     const res = await browser.devtools.inspectedWindow.eval(evalString);
     return;
   }
-
-  console.log(`prompt: ${prompt}`);
 
   const input_context = document.getElementById("input_context").value;
   const query = `[...document.querySelectorAll('${input_context}')].map(x => x.outerHTML).join('\\n')`;
@@ -146,8 +149,8 @@ async function doCompletePrompt(prompt) {
   const resp = await fetch("https://copilot-proxy.githubusercontent.com/v1/engines/copilot-codex/completions", {
     method: "POST",
     body: JSON.stringify({
-      prompt: `// Path: ${page_url}\n${page_source}\n<script>\n${prompt}`,
-      suffix: "\n</script>",
+      prompt: `// Path: ${page_url}\n${page_source}\n<script>\n${promptPrefix.trimEnd()}`,
+      suffix: "${promptSuffix}\n</script>",
       max_tokens: 1000,
       temperature: 0,
       top_p: 1,
@@ -185,21 +188,14 @@ async function doCompletePrompt(prompt) {
   return result;
 }
 
-async function completePrompt() {
+document.addEventListener("DOMContentLoaded", async function() {
   const input_el = document.getElementById("input_prompt");
+  createEditor(input_el, completePrompt);
 
-  let prompt = input_el.value;
-  let result = await doCompletePrompt(prompt);
-  if (result.length === 0) {
-    prompt += "\n";
-    result = await doCompletePrompt(prompt);
-    if (result.length) {
-      result = "\n" + result;
-    }
+  const cached_token = await browser.storage.local.get({ auth_token: null });
+  if (!cached_token.auth_token) {
+    document.getElementById("pre-setup").style.display = "";
+  } else {
+    document.getElementById("post-setup").style.display = "";
   }
-
-  input_el.value += result;
-}
-
-document.getElementById("button_setup").addEventListener("click", initialSetup);
-document.getElementById("button_prompt").addEventListener("click", completePrompt);
+});
