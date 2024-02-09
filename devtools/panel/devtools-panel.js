@@ -149,7 +149,7 @@ async function completePrompt(promptPrefix, promptSuffix) {
   const resp = await fetch("https://copilot-proxy.githubusercontent.com/v1/engines/copilot-codex/completions", {
     method: "POST",
     body: JSON.stringify({
-      prompt: `// Path: ${page_url}\n${page_source}\n<script>\n${promptPrefix.trimEnd()}`,
+      prompt: `// Path: ${page_url}\n${page_source}\n<script>\n${promptPrefix}`,
       suffix: "${promptSuffix}\n</script>",
       max_tokens: 1000,
       temperature: 0,
