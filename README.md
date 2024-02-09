@@ -24,7 +24,7 @@ copilot has limits on the maximum prompt size, so you will need to tweak the
 query selector field to pick which elements are "visible" to the AI. You can
 improve the quality of the suggestions by choosing a more restrictive selector.
 While typing in the editor view, the AI will be activated whenever you stop
-typing. You can manually request completions by pressing `Ctrl + Enter`.
+typing. You can manually request completions by pressing `Ctrl + Space`.
 
 ## Limitations
 
