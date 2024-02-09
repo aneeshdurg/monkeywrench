@@ -1,6 +1,6 @@
 # firefox copilot
 
-Integrate Github Copilot with Firefox devtools! Have you ever wanted to change the visibility of annoying elements on a website you were visiting but didn't know how, or couldn't be bother to script it up in the console? `ffcopilot` aims to make such tasks far more accesible by integrating Github Copilot. Click on the picture below to see a demo video. Note that this project is very much a work in progress.
+Integrate Github's Copilot AI with Firefox devtools! Have you ever wanted to change the visibility of annoying elements on a website you were visiting but didn't know how, or couldn't be bother to script it up in the console? `ffcopilot` aims to make such tasks far more accesible by integrating Github Copilot. Click on the picture below to see a demo video. Note that this project is very much a work in progress.
 
 [![blah](./example.png)](https://drive.google.com/file/d/1ilbsFBN79XrbGavJOUXeHEB_bYNO-_VK/view?usp=sharing)
 
