@@ -4,21 +4,29 @@ In here, we can create our panel.
 */
 
 function handleShown() {
-  console.log("panel is being shown");
+  browserShim.log("panel is being shown");
 }
 
 function handleHidden() {
-  console.log("panel is being hidden");
+  browserShim.log("panel is being hidden");
 }
 
-/**
-Create a panel, and add listeners for panel show/hide events.
-*/
-browser.devtools.panels.create(
+browserShim.log("Installing panel");
+
+function onPanelCreated(newPanel) {
+  newPanel.onShown.addListener(handleShown);
+  newPanel.onHidden.addListener(handleHidden);
+}
+
+const panelSpec = [
   "CoPilot",
   "/icons/favicon.ico",
   "/devtools/panel/panel.html"
-).then((newPanel) => {
-  newPanel.onShown.addListener(handleShown);
-  newPanel.onHidden.addListener(handleHidden);
-});
+];
+
+
+if (typeof browser === "undefined") {
+  chrome.devtools.panels.create(...panelSpec, onPanelCreated);
+} else {
+  browser.devtools.panels.create(...panelSpec).then(onPanelCreated);
+}
