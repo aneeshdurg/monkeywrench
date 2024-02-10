@@ -1,7 +1,7 @@
 {
   "description": "Integrate copilot with devtools",
   "manifest_version": 3,
-  "name": "copilot-panel",
+  "name": "monkeywrench",
   "version": "0.1",
   "author": "Aneesh Durg",
   "homepage_url": "https://aneeshdurg.me/TODO",

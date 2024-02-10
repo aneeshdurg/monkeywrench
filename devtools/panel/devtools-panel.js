@@ -1,5 +1,4 @@
 let promptInput = null;
-
 async function authenticateDevice() {
   browserShim.log("authenticateDevice");
   const resp = await fetch("https://github.com/login/device/code", {
@@ -123,52 +122,129 @@ async function completePrompt(promptPrefix, promptSuffix) {
   }
 
   const input_context = document.getElementById("input_context").value;
-  const query = `[...document.querySelectorAll('${input_context}')].map(x => x.outerHTML).join('\\n')`;
+  // TODO - expose probabilities as settings
+  const query = `(() => {
+    function cloneAndRandomlyDropDataAttributes(node, prob) {
+      const cloned_node = node.cloneNode();
+      for (let attr of node.attributes) {
+        if (attr.name.startsWith('data-')) {
+          if (Math.random() < prob) {
+            cloned_node.removeAttribute(attr.name);
+          } else if (cloned_node.getAttribute(attr.name).length > 10) {
+            // Truncate long data attributes
+            cloned_node.setAttribute(attr.name, '...');
+          }
+        }
+      }
+
+      return cloned_node;
+    }
+
+    // For now drop all attributes
+    const dropAttributesProb = 0.5;
+
+    function probabalisticClone(parent, node, prob) {
+      // if the node is a text node, just append it to the parent.
+      if (node.nodeType === Node.TEXT_NODE) {
+        parent.appendChild(node.cloneNode());
+        return;
+      }
+
+      // If the node is not an element node, just return.
+      if (node.nodeType !== Node.ELEMENT_NODE) {
+        return;
+      }
+
+      if (Math.random() < prob) {
+        const cloned_node = cloneAndRandomlyDropDataAttributes(node, dropAttributesProb);
+        parent.appendChild(cloned_node);
+        for (let child_node of node.childNodes) {
+          probabalisticClone(cloned_node, child_node, prob / 2);
+        }
+        return;
+      }
+
+      // Fifty-fifty chance of not cloning the node, or directly replacing it
+      // with it's child nodes.
+      if (Math.random() < prob / 2) {
+        for (let child_node of node.childNodes) {
+          probabalisticClone(parent, child_node, prob / 2);
+        }
+      }
+    }
+
+    const nodes = document.querySelectorAll('${input_context}');
+    const cleaned_nodes = [];
+    for (let node of nodes) {
+      const cloned_node = cloneAndRandomlyDropDataAttributes(node, dropAttributesProb);
+
+      for (let child_node of node.childNodes) {
+        probabalisticClone(cloned_node, child_node, 0.5);
+      }
+      cloned_node.querySelectorAll('path').forEach(x => x.setAttribute('d', '...'));
+      cleaned_nodes.push(cloned_node);
+    }
+    return cleaned_nodes.map(x => x.outerHTML).join('\\n');
+  })()`;
 
   // TODO - replace this with the actual contents of the page
   let page_source = await browserShim.evalInInspectedWindow(query);
   page_source = html_beautify(page_source[0]);
 
   let page_source_lines = page_source.split('\n');
-  const max_lines = 250;
-  if (page_source_lines.length > max_lines) {
-    browserShim.log("Truncating page source to max_lines");
-    // This isn't a good solution. We should instead use the node count and
-    // randomly sample nodes to get a representative sample of the page.
-    page_source_lines = page_source_lines.slice(0, max_lines);
-    page_source = page_source_lines.join('\n');
-  }
+  browserShim.log(page_source, page_source_lines.length);
 
-  browserShim.log(page_source);
-
-  // TODO - replace this with the actual URL of the page (sans domain?)
-  const page_url = "index.html";
+  // TODO - replace this with the actual URL of the page
+  const page_url = await browserShim.evalInInspectedWindow("window.location.href");
 
   const language = "javascript";
   const token = await getToken();
-  const resp = await fetch("https://copilot-proxy.githubusercontent.com/v1/engines/copilot-codex/completions", {
-    method: "POST",
-    body: JSON.stringify({
-      prompt: `// Path: ${page_url}\n${page_source}\n<script>\n${promptPrefix}`,
-      suffix: "${promptSuffix}\n</script>",
-      max_tokens: 1000,
-      temperature: 0,
-      top_p: 1,
-      n: 1,
-      stop: ["\n"],
-      nwo: "github/copilot.vim",
-      stream: true,
-      extra: {
-        language: language,
-      },
-    }),
-    headers: {
-      authorization: `Bearer ${token}`
-    }
-  });
 
-  const text = await resp.text();
-  // browserShim.log(text);
+  const container = document.getElementById("errorContainer");
+  container.innerHTML = "";
+
+  let text = "";
+  try {
+    const resp = await fetch("https://copilot-proxy.githubusercontent.com/v1/engines/copilot-codex/completions", {
+      method: "POST",
+      body: JSON.stringify({
+        prompt: `<!-- Path: ${page_url} -->\n${page_source}\n<script>\n${promptPrefix}`,
+        suffix: "${promptSuffix}\n</script>",
+        max_tokens: 1000,
+        temperature: 0,
+        top_p: 1,
+        n: 1,
+        stop: ["\n"],
+        nwo: "github/copilot.vim",
+        stream: true,
+        extra: {
+          language: language,
+        },
+      }),
+      headers: {
+        authorization: `Bearer ${token}`
+      }
+    });
+
+    if (resp.ok) {
+      text = await resp.text();
+    } else {
+      console.log(resp);
+      //const err = await resp.json();
+      throw new Error(`Failed to fetch response: ${0}`);
+    }
+  } catch (e) {
+    const error = document.createElement("div");
+    error.classList.add("error");
+    error.innerText = "Request failed - try a more restrictive selector";
+    container.appendChild(error);
+    error.onclick = () => {
+      error.remove();
+    };
+
+    return null;
+  }
+
   const lines = text.split('\n');
   const data = lines.filter(x => x.startsWith('data: {')).map((x) => {
     try {

@@ -7,8 +7,16 @@
     <script src="editor.bundle.js"></script>
     <script src="../browsershim.js"></script>
     <script src="devtools-panel.js"></script>
+    <style>
+      .error {
+        color: red;
+        background-color: #fdd;
+      }
+    </style>
   </head>
   <body>
+    <div id="errorContainer">
+    </div>
     <div id="pre-setup" style="display: none;">
       <button id="button_setup">Initial setup</button>
     </div>

@@ -3,7 +3,7 @@
 Integrate Github's Copilot AI with Firefox's devtools! Have you ever wanted to
 change the visibility of annoying elements on a website you were visiting but
 didn't know how, or couldn't be bother to script it up in the console?
-`ffcopilot` aims to make such tasks far more accessible by integrating Github
+`monkeywrench` aims to make such tasks far more accessible by integrating Github
 Copilot. Click on the picture below to see a demo video. Note that this project
 is very much a work in progress.
 
@@ -36,7 +36,5 @@ typing. You can manually request completions by pressing `Ctrl + Space`.
 The context provided to the completions is very basic. There is an input field
 where a query selector can be written to choose the elements that will be
 "visible" to the AI. If the provided selector yields too large of a payload to
-be used as context, only the first 250 lines of HTML are sent. In the future, I
-hope to make this more advanced by selecting content at the node level and
-filtering content with a smarter strategy (e.g. random sampling of nodes) to
-stay within the token limit while providing useful context.
+be used as context, a random sample of the selected node are sent. This sampling
+process is far from ideal.
